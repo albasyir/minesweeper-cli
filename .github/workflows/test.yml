@@ -26,7 +26,7 @@ jobs:
         run: npm run test
 
       - name: Generate coverage badge
-        run: npm run coverage:badge
+        run: npm run test:badge
 
       - name: Commit badge
         run: |
