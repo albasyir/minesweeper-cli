@@ -1,7 +1,8 @@
 {
   "scripts": {
     "play": "ts-node play.ts",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "coverage:badge": "coverage-badger -o .github/badges"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
