@@ -52,7 +52,7 @@ export class MinesweeperCLI {
   }
 
   private render() {
-    // console.clear();
+    console.clear();
 
     console.log("========================================");
     this.renderHeader();
