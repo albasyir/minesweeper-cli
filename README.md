@@ -1,6 +1,7 @@
 # Minesweeper CLI
 
-![coverage](.github/badges/coverage.svg)
+[![Test](https://github.com/albasyir/minesweeper-cli/actions/workflows/test.yml/badge.svg)](https://github.com/albasyir/minesweeper-cli/actions/workflows/test.yml)
+![Coverage](.github/badges/coverage.svg)
 
 Minesweeper CLI with Zero Dependency
 
