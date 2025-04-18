@@ -19,10 +19,12 @@ export class Minesweeper {
     this.#board = board;
   }
 
-  newGame() {
+  newGame(options?: {
+    size?: number;
+  }) {
     this.#logger.log('starting new game...')
     this.#gameStatus = "playing";
-    this.board.init();
+    this.board.init(options);
   }
 
   async openCell(rowInput: number, colInput: number) {
@@ -43,6 +45,9 @@ export class Minesweeper {
     }
 
     if (!result.isSafe) this.#gameStatus = 'lose';
+
+    const is_win = this.board.totalSafeCells === this.board.totalOpenedCells;
+    if (is_win) this.#gameStatus = 'win';
     
     if (result.cell) {
       this.#logger.log(`you just open ${result.cell.symbol}`);

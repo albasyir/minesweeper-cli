@@ -27,14 +27,12 @@ export class MinesweeperCLI {
       return this.renderAnsweredBoardCells();
     }
 
-    this.#logger.log("render unanswered board");
     this.minesweeper.board.cells.forEach((row) => {
       console.log(row.map((cell) => cell.symbol).join(""));
     });
   }
 
   renderAnsweredBoardCells() {
-    this.#logger.log("render answered board");
     this.minesweeper.board.cells.forEach((row) => {
       console.log(row.map((cell) => cell.secretSymbol).join(""));
     });
@@ -42,10 +40,10 @@ export class MinesweeperCLI {
 
   renderHelp() {
     console.log("Actions:");
-    console.log("new = new game");
+    console.log("new = new game, ex 'new 7' to play new game 7x7");
     console.log("open = open cell, ex: 'open 1 5' to open row 1 col 5");
-    console.log("secret = inspect board (cheating)");
-    console.log("exit = quite from game")
+    console.log("inspect = inspect board to know exactly behind the cell");
+    console.log("exit = quite from game");
   }
 
   renderHeader() {
@@ -63,30 +61,67 @@ export class MinesweeperCLI {
     console.log("========================================");
   }
 
+  private getRowAndColFromInput(inputLine: string) {
+    const [_, row, col] = inputLine.split(" ");
+    const rowNum = parseInt(row);
+    const colNum = parseInt(col);
+    if (isNaN(rowNum) || isNaN(colNum)) {
+      this.#logger.log("Invalid row or column number");
+      return;
+    }
+
+    return {
+      row: rowNum,
+      col: colNum,
+    }
+  }
+
+  private getSizeFromInput(inputLine: string) {
+    const [_, inputedSize] = inputLine.split(" ");
+    const size = parseInt(inputedSize);
+    if (isNaN(size)) return 10;
+
+    return size
+  }
+
   private async handleInput(line: string) {
     const input = line.trim();
 
+    //
+    // exit
+    //
     if (input === "exit") {
       this.#cli.close();
-    } else if (input === "new") {
-      this.minesweeper.newGame();
+    }
+    
+    //
+    // new game
+    //
+    else if (input.startsWith("new")) {
+      const size = this.getSizeFromInput(input);
+      this.minesweeper.newGame({ size });
       this.render();
-    } else if (input === "secret") {
+    }
+    
+    //
+    // inspect
+    //
+    else if (input === "inspect") {
       this.render();
       this.renderAnsweredBoardCells();
-    } else if (input.startsWith("open")) {
-      const [_, row, col] = input.split(" ");
-      const rowNum = parseInt(row);
-      const colNum = parseInt(col);
-      if (isNaN(rowNum) || isNaN(colNum)) {
-        this.#logger.log("Invalid row or column number");
-      } else {
-        await this.minesweeper.openCell(rowNum, colNum);
-        this.render();
-      }
     }
+    
+    //
+    // open cell
+    //
+    else if (input.startsWith("open")) {
+      const selection = this.getRowAndColFromInput(input);
 
-    this.#cli.prompt();
+      if (!selection) return;
+
+      await this.minesweeper.openCell(selection.row, selection.col);
+      this.render();
+    }
   }
 
   private onClose() {

@@ -1,4 +1,3 @@
-
 import { Logger } from "../logger/logger-service";
 import { Cell } from "./cell/cell";
 import { CellFactory } from "./cell/factory";
@@ -6,21 +5,42 @@ import { MineCell } from "./cell/mine";
 import { SafeCell } from "./cell/safe";
 
 export class Board {
-  #logger = new Logger(Board)
-
+  #logger = new Logger(Board);
   #cells: Cell[][] = [];
+  #totalMineCell: number = 10;
+  #sizeCell: number = 10;
+  #totalOpenedCells = 0;
 
-  /**
-   * Detail of cells on ran board
-   */
-  public get cells() {
+  get sizeCell() {
+    return this.#sizeCell;
+  }
+
+  set sizeCell(value: number) {
+    this.#sizeCell = value;
+    this.#totalMineCell = this.#sizeCell;
+  }
+
+  get cells() {
     return this.#cells;
   }
 
+  get totalMineCell() {
+    return this.#totalMineCell;
+  }
+
+  get totalOpenedCells() {
+    return this.#totalOpenedCells;
+  }
+
+  get totalCell() {
+    return this.sizeCell * this.sizeCell;
+  }
+
+  get totalSafeCells() {
+    return this.totalCell - this.totalMineCell
+  }
+
   constructor(
-    private rows: number = 10,
-    private cols: number = 10,
-    private mines: number = 10,
     private cellFactory: CellFactory = new CellFactory(),
   ) { }
 
@@ -33,37 +53,66 @@ export class Board {
     return Math.floor(Math.random() * max);
   }
 
+  protected getCell(row: number, col: number): Cell | void {
+    if (row < 0 || row >= this.sizeCell || col < 0 || col >= this.sizeCell) return;
+    return this.#cells[row][col];
+  }
+
+  protected setCell(row: number, col: number, cell: Cell): Cell | void{
+    if (row < 0 || row >= this.sizeCell || col < 0 || col >= this.sizeCell) return;
+    this.#cells[row][col] = cell;
+    return cell;
+  }
+
   /**
    * initial board, just like make fresh again
-   * 
    */
-  init() {
-    console.log('[Board] initialize...');
-    // initialize cells
-    for (let i = 0; i < this.rows; i++) {
-      this.#cells[i] = [];
-      for (let j = 0; j < this.cols; j++) {
-        this.#cells[i][j] = this.cellFactory.createSafeCell();
+  init(options?: {
+    size?: number
+  }) {
+    this.#cells = [];
+    this.#totalOpenedCells = 0;
+
+    //
+    // resize as needed
+    //
+    if (options?.size) {
+      this.#logger.log('size changed to', options?.size);
+      this.sizeCell = options.size;
+    }
+
+    //
+    // initial cells (with safe cells)
+    //
+    this.#logger.log('initialize with size', this.sizeCell, '...');
+    for (let row = 0; row < this.sizeCell; row++) {
+      this.#cells[row] = [];
+      for (let col = 0; col < this.sizeCell; col++) {
+        this.setCell(row, col, this.cellFactory.createSafeCell());
       }
     }
 
-    // place random mines using for loop
-    console.log('[Board] store mines...');
-    for (let minesPlaced = 0; minesPlaced < this.mines;) {
-      const randomRow = this.randomNumber(this.rows);
-      const randomCol = this.randomNumber(this.cols);
+    
+    //
+    // planting mines
+    //
+    this.#logger.log('planting mines...');
+    for (let minesPlanted = 0; minesPlanted < this.#totalMineCell;) {
+      const randomRow = this.randomNumber(this.sizeCell);
+      const randomCol = this.randomNumber(this.sizeCell);
 
       if (!(this.#cells[randomRow][randomCol] instanceof MineCell)) {
-        this.#cells[randomRow][randomCol] = this.cellFactory.createMineCell();
-        minesPlaced++;
+        this.setCell(randomRow, randomCol, this.cellFactory.createMineCell());
+        minesPlanted++;
       }
     }
 
+    //
     // calculate neighbor mine count
-    // TODO: can be optimized by counting from Mine iteraton, now it's focus on acuracy and dev speed
-    console.log('[Board] calculate safe cell mines count...');
-    for (let currentRow = 0; currentRow < this.rows; currentRow++) {
-      for (let currentCol = 0; currentCol < this.cols; currentCol++) {
+    //
+    this.#logger.log('calculate safe cell mines count...')
+    for (let currentRow = 0; currentRow < this.sizeCell; currentRow++) {
+      for (let currentCol = 0; currentCol < this.sizeCell; currentCol++) {
         const cell = this.#cells[currentRow][currentCol];
 
         // only SafeCell can be count
@@ -80,14 +129,9 @@ export class Board {
               const neighborRow = currentRow + offsetRow;
               const neighborCol = currentCol + offsetCol;
 
-              // edge checking
-              const is_out_of_bounds =
-                neighborRow < 0 || neighborRow >= this.rows ||
-                neighborCol < 0 || neighborCol >= this.cols;
-
-              if (is_out_of_bounds) continue;
-
-              const is_mine = this.#cells[neighborRow][neighborCol] instanceof MineCell;
+              const neighborCell = this.getCell(neighborRow, neighborCol);
+              if (!neighborCell) continue;
+              const is_mine = neighborCell instanceof MineCell;
 
               if (is_mine) mineCount++;
             }
@@ -103,10 +147,8 @@ export class Board {
     cell: Cell,
     isSafe: boolean
   }> {
-    if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) return;
- 
-    const cell = this.#cells[row][col];
-    if (cell.isOpen) return;
+    const cell = this.getCell(row, col);
+    if (!cell || cell.isOpen) return;
  
     const isSafe = await cell.open();
 
@@ -114,6 +156,8 @@ export class Board {
       cell,
       isSafe
     }
+
+    this.#totalOpenedCells++;
 
     await this.autoOpen(row, col);
 
@@ -137,11 +181,8 @@ export class Board {
 
       this.#logger.log('processing for key', key)
 
-      if (r < 0 || r >= this.rows || c < 0 || c >= this.cols) return;
-
-      const cell = this.#cells[r][c];
-      this.#logger.log('processing', cell)
-      if (!(cell instanceof SafeCell)) return;
+      const cell = this.getCell(r, c);
+      if (!cell || !(cell instanceof SafeCell)) return;
 
       this.#logger.log('opening cell', key);
       await this.openCell(r, c);

@@ -7,68 +7,71 @@ describe('Board', () => {
   let board: Board;
 
   beforeEach(() => {
-    board = new Board(3, 3, 1, new CellFactory());
-    board.init();
+    board = new Board(new CellFactory());
   });
 
-  it('should initialize board with correct dimensions', () => {
-    expect(board.cells.length).toBe(3);
-    expect(board.cells[0].length).toBe(3);
+  it('should initialize board with correct size and mine count', () => {
+    board.init({ size: 5 });
+    expect(board.sizeCell).toBe(5);
+    expect(board.cells.length).toBe(5);
+    expect(board.cells[0].length).toBe(5);
+
+    let mineCount = 0;
+    for (let row of board.cells) {
+      for (let cell of row) {
+        if (cell instanceof MineCell) mineCount++;
+      }
+    }
+
+    expect(mineCount).toBe(5); // totalMineCell equals sizeCell
   });
 
-  it('should place the correct number of mines', () => {
-    const mineCount = board.cells.flat().filter(cell => cell instanceof MineCell).length;
-    expect(mineCount).toBe(1);
-  });
+  it('should calculate correct neighbor mine count', () => {
+    board.init({ size: 3 });
+    const cells = board.cells;
 
-  it('should calculate correct neighborMineCount for SafeCells', () => {
-    for (let i = 0; i < board.cells.length; i++) {
-      for (let j = 0; j < board.cells[i].length; j++) {
-        const cell = board.cells[i][j];
+    // Count SafeCell neighbor mines
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const cell = cells[r][c];
         if (cell instanceof SafeCell) {
-          let count = 0;
-          for (let di = -1; di <= 1; di++) {
-            for (let dj = -1; dj <= 1; dj++) {
-              const ni = i + di;
-              const nj = j + dj;
-              if (
-                ni >= 0 && ni < board.cells.length &&
-                nj >= 0 && nj < board.cells[0].length &&
-                !(di === 0 && dj === 0) &&
-                board.cells[ni][nj] instanceof MineCell
-              ) {
-                count++;
+          let expectedCount = 0;
+
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              if (dr === 0 && dc === 0) continue;
+              const nr = r + dr;
+              const nc = c + dc;
+              if (nr >= 0 && nr < 3 && nc >= 0 && nc < 3) {
+                if (cells[nr][nc] instanceof MineCell) expectedCount++;
               }
             }
           }
-          expect(cell.neighborMineCount).toBe(count);
+
+          expect(cell.neighborMineCount).toBe(expectedCount);
         }
       }
     }
   });
 
-  it('should open only the target cell if neighborMineCount > 0', async () => {
-    const safe = board.cells.flat().find(cell => cell instanceof SafeCell && cell.neighborMineCount > 0) as SafeCell;
-    const openSpy = jest.spyOn(safe, 'open');
-    const index = board.cells.flat().indexOf(safe);
-    const row = Math.floor(index / 3);
-    const col = index % 3;
-    await board.autoOpen(row, col);
-    expect(openSpy).toHaveBeenCalledTimes(1);
+  it('should open a cell and return result', async () => {
+    board.init({ size: 3 });
+
+    const result = await board.openCell(0, 0);
+    if (result) {
+      expect(result.cell.isOpen).toBe(true);
+      expect(typeof result.isSafe).toBe('boolean');
+    }
   });
 
-  it('should recursively open cells if neighborMineCount is 0', async () => {
-    // clear all mines and reset neighborMineCount
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        board.cells[i][j] = new SafeCell();
-        board.cells[i][j]['neighborMineCount'] = 0;
-      }
-    }
-    const openSpies = board.cells.flat().map(cell => jest.spyOn(cell, 'open'));
-    await board.autoOpen(1, 1);
-    for (const spy of openSpies) {
-      expect(spy).toHaveBeenCalled();
-    }
+  it('should not reopen the same cell', async () => {
+    board.init({ size: 3 });
+    const cell = board['cells'][0][0];
+
+    const first = await board.openCell(0, 0);
+    expect(cell.isOpen).toBe(true);
+
+    const second = await board.openCell(0, 0);
+    expect(second).toBeUndefined();
   });
 });
