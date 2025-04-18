@@ -2,7 +2,7 @@
 
 ![coverage](.github/badges/coverage.svg)
 
-Remeber windows Minesweeper? now in CLI with Zero Dependency
+Minesweeper CLI with Zero Dependency
 
 ## Requiredment
 

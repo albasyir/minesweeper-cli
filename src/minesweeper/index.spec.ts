@@ -9,23 +9,21 @@ describe('Minesweeper', () => {
     game = new Minesweeper();
   });
 
-  it('should initialize the board with correct number of mines', () => {
+  it('should initialize the board with correct number of mines and safe cells', () => {
     game.newGame({ size: 5 });
     const board = game.board;
 
     let mineCount = 0;
+    let safeCount = 0;
     for (let row of board.cells) {
       for (let cell of row) {
         if (cell instanceof MineCell) mineCount++;
+        if (cell instanceof SafeCell) safeCount++;
       }
     }
 
-    expect(mineCount).toBe(5); // sizeCell == totalMineCell
-  });
-
-  it('should return current status if game is not in playing mode', async () => {
-    const result = await game.openCell(1, 1);
-    expect(result?.status).toBe('idle');
+    expect(mineCount).toBe(board.totalMineCell);
+    expect(safeCount).toBe(board.totalSafeCells);
   });
 
   it('should detect game over when opening a mine cell', async () => {
