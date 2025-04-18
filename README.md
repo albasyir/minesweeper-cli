@@ -18,6 +18,6 @@ Minesweeper CLI with Zero Dependency
 
 ## Gameplay
 
-![gameplay-playing](./assets//gameplay-1.png)
+![gameplay-playing](./assets//gameplay-playing.png)
 ![gameplay-lose](./assets//gameplay-lose.png)
 ![gameplay-win](./assets//gameplay-win.png)
