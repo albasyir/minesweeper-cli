@@ -28,10 +28,9 @@ jobs:
       - name: Generate coverage badge
         run: npm run test:badge
 
-      - name: Commit badge
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add .github/badges/coverage.svg
-          git commit -m "update coverage badge" || echo "No changes"
-          git push
+      - name: Commit badge using Bot
+        uses: IAreKyleW00t/verified-bot-commit@v1
+        with:
+          message: 'feat: Some changes'
+          files: |
+            .github/badges/coverage.svg
