@@ -2,7 +2,7 @@
   "scripts": {
     "play": "ts-node play.ts",
     "test": "jest --coverage",
-    "coverage:badge": "coverage-badger -o .github/badges"
+    "coverage:badge": "coverage-badger -r coverage/clover.xml -d .github/badges"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
