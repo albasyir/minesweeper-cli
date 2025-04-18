@@ -27,12 +27,14 @@ export class MinesweeperCLI {
       return this.renderAnsweredBoardCells();
     }
 
+    this.#logger.log("render unanswered board");
     this.minesweeper.board.cells.forEach((row) => {
       console.log(row.map((cell) => cell.symbol).join(""));
     });
   }
 
   renderAnsweredBoardCells() {
+    this.#logger.log("render answered board");
     this.minesweeper.board.cells.forEach((row) => {
       console.log(row.map((cell) => cell.secretSymbol).join(""));
     });

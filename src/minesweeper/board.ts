@@ -99,6 +99,30 @@ export class Board {
     }
   }
 
+  async openCell(row: number, col: number): Promise<void | {
+    cell: Cell,
+    isSafe: boolean
+  }> {
+    if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) return;
+ 
+    const cell = this.#cells[row][col];
+    if (cell.isOpen) return;
+ 
+    const isSafe = await cell.open();
+
+    if (!isSafe) return {
+      cell,
+      isSafe
+    }
+
+    await this.autoOpen(row, col);
+
+    return {
+      cell,
+      isSafe
+    };
+  }
+
   /**
    * auto open for "0"
    */
@@ -120,7 +144,7 @@ export class Board {
       if (!(cell instanceof SafeCell)) return;
 
       this.#logger.log('opening cell', key);
-      await cell.open();
+      await this.openCell(r, c);
 
       if (cell.neighborMineCount === 0) {
         this.#logger.log('open neighbor')

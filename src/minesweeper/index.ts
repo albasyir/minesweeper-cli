@@ -34,34 +34,24 @@ export class Minesweeper {
 
     const actualRow = rowInput - 1;
     const actualCol = colInput - 1;
-    const cell = this.board.cells[actualRow][actualCol];
 
     this.#logger.log("opening...");
-    const result = await cell.open();
+    const result = await this.board.openCell(actualRow, actualCol);
 
-    if (!result) this.#gameStatus = 'lose';
-
-    this.#logger.log("auto open...");
-    await this.board.autoOpen(actualRow, actualCol);
-
-    if (cell) {
-      this.#logger.log(`you just open ${cell.symbol}`);
-      return;
+    if (!result) return {
+      status: this.#gameStatus,
     }
 
-    if (this.#gameStatus == 'lose') {
-      this.#logger.log('Game Over!');
-      return;
-    }
-
-    if (this.#gameStatus == 'win') {
-      this.#logger.log('You WIN!');
+    if (!result.isSafe) this.#gameStatus = 'lose';
+    
+    if (result.cell) {
+      this.#logger.log(`you just open ${result.cell.symbol}`);
       return;
     }
 
     return {
       status: this.#gameStatus,
-      cell: cell,
+      cell: result.cell,
     };
   }
 }

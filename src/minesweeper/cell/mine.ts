@@ -6,8 +6,6 @@ export class MineCell extends Cell {
   }
   
   protected async openProcess() {
-    console.log(MineCell.name, "BOOM!");
-
     return false;
   }
 }
