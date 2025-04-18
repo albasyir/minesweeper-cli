@@ -31,6 +31,6 @@ jobs:
       - name: Commit badge using Bot
         uses: IAreKyleW00t/verified-bot-commit@v1
         with:
-          message: 'feat: Some changes'
+          message: 'docs: update badges'
           files: |
             .github/badges/coverage.svg
