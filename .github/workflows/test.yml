@@ -27,10 +27,3 @@ jobs:
 
       - name: Generate coverage badge
         run: npm run test:badge
-
-      - name: Commit badge using Bot
-        uses: IAreKyleW00t/verified-bot-commit@v1
-        with:
-          message: 'docs: update badges'
-          files: |
-            .github/badges/coverage.svg
