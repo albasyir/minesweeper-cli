@@ -8,6 +8,7 @@ Minesweeper CLI with Zero Dependency
 ## Requiredment
 
 - use node 22
+- run `npm install`
 
 ## How to run Game
 
